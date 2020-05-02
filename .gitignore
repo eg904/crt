@@ -1,0 +1,7 @@
+.vscode/
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+inventory
+

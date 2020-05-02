@@ -1,0 +1,41 @@
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: Ensure nginx is installed.
+      apt:
+        name: "nginx"
+        state: present
+        update_cache: yes
+    - name: Copy the nginx configuration file
+      copy: 
+        src: "../nginx.conf"
+        dest: "/etc/nginx/nginx.conf"
+    - name: Copy hosts files
+      copy: src=../hosts/
+            dest=/etc/nginx/sites-available/
+    - name: Remove the default nginx site
+      file: 
+        path: "/etc/nginx/sites-enabled/default"
+        state: "absent"
+    
+    - name: Get a list of all vhosts
+      find:
+        paths: /etc/nginx/sites-available
+        patterns: "*.net"
+        file_type: file
+      register: find
+    
+    - name: Apply symlinks in sites-enabled
+      file:
+        dest: /etc/nginx/sites-enabled/{{ item.path | basename }}
+        src: "{{ item.path }}"
+        state: link
+        force: yes
+      with_items: "{{ find.files }}"
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+      become: yes
